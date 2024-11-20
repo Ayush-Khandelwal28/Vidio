@@ -116,6 +116,30 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Logout successful"));
 });
 
+const changePassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user._id;
+    if (!currentPassword || !newPassword) {
+        throw new ApiError(400, "Please provide current and new password");
+    }
+    const user = await User.findById(userId);
+    const isMatch = await user.isPasswordCorrect(currentPassword);
+    if (!isMatch) {
+        throw new ApiError(401, "Invalid current password");
+    }
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, "Password changed successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = req.user;
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    return res.status(200).json(new ApiResponse(200, "User found", user));
+});
+
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const { refreshToken } = req.cookies;
     if (!refreshToken) {
@@ -141,4 +165,34 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken }; 
+const updateAvatar = asyncHandler(async (req, res) => {
+    const avatarPath = req.file?.path;
+    if (!avatarPath) {
+        throw new ApiError(400, "Avatar File is missing");
+    }
+    const avatar = await uploadFile(avatarPath);
+    if (!avatar.url) {
+        throw new ApiError(500, "Failed to upload avatar");
+    }
+    const user = req.user;
+    user.avatar = avatar.url;
+    await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, "Avatar updated successfully", user));
+});
+
+const updateCoverImage = asyncHandler(async (req, res) => {
+    const coverImagePath = req.file?.path;
+    if (!coverImagePath) {
+        throw new ApiError(400, "Cover Image File is missing");
+    }
+    const coverImage = await uploadFile(coverImagePath);
+    if (!coverImage.url) {
+        throw new ApiError(500, "Failed to upload cover image");
+    }
+    const user = req.user;
+    user.coverImage = coverImage.url;
+    await user.save({ validateBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, "Cover Image updated successfully", user));
+});
+
+export { registerUser, loginUser, logoutUser, changePassword, getCurrentUser, refreshAccessToken, updateAvatar, updateCoverImage }; 
