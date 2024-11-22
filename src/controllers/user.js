@@ -65,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
     const userId = User.findById(user._id);
 
     if (!userId) {
-        return new ApiError(500, "Failed to register user");
+        throw new ApiError(500, "Failed to register user");
     }
 
     return res.status(201).json(new ApiResponse(201, "User registered successfully", user));

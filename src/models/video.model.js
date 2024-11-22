@@ -19,10 +19,6 @@ const videoSchema = new Schema({
         type: String,
         required: [true, "Thumbnail is required"]
     },
-    videoUrl: {
-        type: String,
-        required: [true, "Video URL is required"]
-    },
     viewCount: {
         type: Number,
         default: 0
