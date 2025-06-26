@@ -4,6 +4,8 @@ import ApiResponse from "../utils/apiResponse.js";
 import { Video } from '../models/video.model.js';
 import uploadFile from "../utils/fileUploadToCloudinary.js";
 import uploadVideo from "../utils/videoUploadToAWS.js";
+import addVideoToQueue from "../utils/transcode/queue.js";
+import { getVideoDuration } from "../utils/videoMetadata.js";
 
 const publishVideo = asyncHandler(async (req, res, next) => {
     const { title, description } = req.body;
@@ -19,8 +21,8 @@ const publishVideo = asyncHandler(async (req, res, next) => {
     if (!videoPath || !thumbnailPath) {
         return next(new ApiError("Please provide video and thumbnail", 400));
     }
-    const { url, durationInSeconds } = await uploadVideo(videoPath);
-    if (!url) {
+    const originalUrl = await uploadVideo(videoPath);
+    if (!originalUrl) {
         return next(new ApiError("Failed to upload video", 500));
     }
     const thumbnailUpload = await uploadFile(thumbnailPath);
@@ -28,15 +30,26 @@ const publishVideo = asyncHandler(async (req, res, next) => {
         return next(new ApiError("Failed to upload thumbnail", 500));
     }
     const thumbnailUrl = thumbnailUpload.url;
+    const durationInSeconds = await getVideoDuration(videoPath);
+    if (!durationInSeconds) {
+        return next(new ApiError("Failed to retrieve video duration", 500));
+    }
     const video = await Video.create({
-        videoFile: url,
-        title: title,
-        description: description,
+        videoFile: originalUrl,
+        title,
+        description,
         thumbnail: thumbnailUrl,
         duration: durationInSeconds,
-        owner: user._id
+        owner: user._id,
+        transcodingStatus: 'in-progress',
     });
-    res.status(201).json(new ApiResponse(201, "Video published successfully", video));
+    await addVideoToQueue({
+        videoId: video._id.toString(),
+        inputPath: videoPath
+    });
+    return res.status(201).json(
+        new ApiResponse(201, "Video published and processing started", video)
+    );
 });
 
 const updateVideo = asyncHandler(async (req, res) => {

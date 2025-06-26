@@ -11,6 +11,20 @@ const videoSchema = new Schema({
         required: [true, "Title is required"],
         index: true
     },
+    transcodingStatus: {
+        type: String,
+        enum: ["pending", "in-progress", "completed", "failed"],
+        default: "pending"
+    },
+    resolutions: {
+        type: Map,
+        of: String,
+        default: {},
+    },
+    availableResolutions: {
+        type: [String], 
+        default: [],
+    },
     description: {
         type: String,
         required: [true, "Description is required"]
