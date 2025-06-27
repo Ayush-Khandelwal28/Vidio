@@ -110,6 +110,15 @@
 
 ---
 
+### **Channel Routes**
+
+| Method | Endpoint                  | Description                                                                 | Middleware                                      |
+|--------|----------------------------|-----------------------------------------------------------------------------|------------------------------------------------|
+| GET    | `/:channelId/videos`      | Get all videos from a specific channel by ID.                               |                                                |
+| GET    | `/:channelId/stats`       | Get statistics for a specific channel (total videos, views, subscribers).   |                                                |
+
+---
+
 ### **Comment Routes**
 
 | Method | Endpoint     | Description                                                                 | Middleware                                      |

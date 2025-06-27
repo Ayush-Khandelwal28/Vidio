@@ -23,11 +23,13 @@ import videoRouter from "./routes/video.js";
 import playlistRouter from "./routes/playlist.js";
 import commentRouter from "./routes/comment.js";
 import subscriptionRouter from "./routes/subscription.js";
+import channelRouter from "./routes/channel.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/video", videoRouter);
 app.use("/api/v1/playlists", playlistRouter);
 app.use("/api/v1/comments", commentRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
+app.use("/api/v1/channels", channelRouter);
 
 export default app;
