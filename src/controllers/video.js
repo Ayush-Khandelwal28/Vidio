@@ -89,13 +89,39 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const getVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
+    const { resolution } = req.query;
     const video = await Video.findById(videoId);
     if (!video) {
         throw new ApiError("Video not found", 404);
     }
     video.viewCount += 1;
     await video.save({ validateBeforeSave: false });
-    res.status(200).json(new ApiResponse(200, "Video retrieved Successfully", video));
+
+    let videoUrl = video.videoFile;
+    let selectedResolution = 'original';
+
+    if (resolution && video.transcodingStatus === 'completed' && video.resolutions) {
+        if (video.resolutions.has(resolution)) {
+            videoUrl = video.resolutions.get(resolution);
+            selectedResolution = resolution;
+        } else {
+            console.warn(`Resolution ${resolution} not available for video ${videoId}`);
+        }
+    }
+
+    const videoObject = video.toObject();
+    if (videoObject.resolutions instanceof Map) {
+        videoObject.resolutions = Object.fromEntries(videoObject.resolutions);
+    }
+
+    const responseData = {
+        ...videoObject,
+        streamUrl: videoUrl,
+        selectedResolution,
+        availableResolutions: video.availableResolutions || ['original'],
+        isTranscodingComplete: video.transcodingStatus === 'completed'
+    };
+    res.status(200).json(new ApiResponse(200, "Video retrieved Successfully", responseData));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
